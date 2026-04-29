@@ -2,15 +2,21 @@ import http from "k6/http";
 import { check, sleep } from "k6";
 
 export function makeOptions(defaultVus, defaultDuration, extra = {}) {
+  const thresholds = {
+    http_req_failed: ["rate<0.05"],
+    checks: ["rate>0.95"],
+  };
+  const extraThresholds = extra.thresholds || {};
+
+  for (const name in extraThresholds) {
+    thresholds[name] = extraThresholds[name];
+  }
+
   return {
     vus: Number(__ENV.VUS || defaultVus),
     duration: __ENV.DURATION || defaultDuration,
     summaryTrendStats: ["avg", "min", "med", "p(90)", "p(95)", "p(99)", "max"],
-    thresholds: {
-      http_req_failed: ["rate<0.05"],
-      checks: ["rate>0.95"],
-      ...(extra.thresholds || {}),
-    },
+    thresholds,
   };
 }
 
