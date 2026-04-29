@@ -1,77 +1,95 @@
-# Python/JavaScript Backend Framework Benchmark
+# Бенчмарк backend-фреймворков Python/JavaScript
 
-Reproducible Docker-based benchmark stand for comparing backend frameworks:
-FastAPI, Sanic, aiohttp, Express.js, NestJS, and Fastify.
+Воспроизводимый тестовый стенд на основе Docker для сравнительного анализа backend-фреймворков:
+FastAPI, Sanic, aiohttp, Express.js, NestJS и Fastify.
 
-The stand runs one backend service at a time, warms it up, executes k6 load
-scenarios, records Docker CPU/RAM usage, extracts metrics, normalizes them with
-weights, and generates a Markdown report.
+Стенд запускает по одному backend-сервису, выполняет его прогрев, затем запускает нагрузочные сценарии k6, собирает метрики CPU/RAM через Docker, извлекает показатели производительности, нормализует их с использованием весов и формирует итоговый отчёт в формате Markdown.
 
-## Stack
+## Стек технологий
 
-- Backend services: `GET /ping`, `GET /items`, `GET /io`
-- Load generator: k6
-- Monitoring: `docker stats`
-- Metrics: RPS, average latency, p95 latency, CPU, RAM
-- Output: raw JSON/NDJSON/CSV, processed CSV/JSON, Markdown report
-- CI/CD: GitHub Actions workflow in `.github/workflows/benchmark.yml`
+* Backend-сервисы: `GET /ping`, `GET /items`, `GET /io`
+* Генератор нагрузки: k6
+* Мониторинг: `docker stats`
+* Метрики: RPS, средняя задержка, p95 задержки, CPU, RAM
+* Результаты:
 
-## Test scenarios
+  * сырые данные: JSON / NDJSON / CSV
+  * обработанные данные: CSV / JSON
+  * отчёт: Markdown
+* CI/CD: GitHub Actions (`.github/workflows/benchmark.yml`)
 
-| Test | Purpose | Default load |
-| --- | --- | --- |
-| warmup | Warm up runtime and caches | 10 VUs, 30s |
-| baseline | Normal baseline load | 100 VUs, 60s |
-| work | Mixed realistic traffic: `/ping`, `/items`, `/io` | 100 VUs, 60s |
-| stress | Overload boundary | 500 VUs, 60s |
-| soak | Long-running stability check | 100 VUs, 10m |
+## Сценарии тестирования
 
-The CI profile keeps the same pipeline but shortens durations so the workflow
-validates reproducibility without spending an hour on every push.
+| Тест     | Назначение                                                | Нагрузка по умолчанию |
+| -------- | --------------------------------------------------------- | --------------------- |
+| warmup   | Прогрев среды выполнения и кэшей                          | 10 VUs, 30s           |
+| baseline | Базовая (нормальная) нагрузка                             | 100 VUs, 60s          |
+| work     | Смешанная реалистичная нагрузка: `/ping`, `/items`, `/io` | 100 VUs, 60s          |
+| stress   | Тест на предельную нагрузку                               | 500 VUs, 60s          |
+| soak     | Длительный тест стабильности                              | 100 VUs, 10m          |
 
-## Run
+Профиль CI использует тот же pipeline, но с сокращённой длительностью тестов, чтобы проверять воспроизводимость без длительного выполнения на каждый push.
+
+## Запуск
 
 ```bash
 docker compose build
 bash scripts/run_benchmarks.sh
 ```
 
-Useful alternatives:
+Полезные альтернативы:
 
 ```bash
 BENCH_PROFILE=ci bash scripts/run_benchmarks.sh
 BENCH_BUILD=0 BENCH_RUN_ID=my-run bash scripts/run_benchmarks.sh
+
 python scripts/collect_metrics.py --run-id my-run
 python scripts/normalize.py --run-id my-run
 python scripts/generate_report.py --run-id my-run
 ```
 
-Results are written to:
+## Результаты
 
-- `results/raw/<run_id>/<framework>/<test>/k6-summary.json`
-- `results/raw/<run_id>/<framework>/<test>/k6-samples.ndjson`
-- `results/raw/<run_id>/<framework>/<test>/docker-stats.csv`
-- `results/processed/metrics.csv`
-- `results/processed/scores.csv`
-- `results/processed/overall_scores.csv`
-- `results/reports/<run_id>/report.md`
+Результаты сохраняются в следующие директории:
 
-## Configuration
+* `results/raw/<run_id>/<framework>/<test>/k6-summary.json`
+* `results/raw/<run_id>/<framework>/<test>/k6-samples.ndjson`
+* `results/raw/<run_id>/<framework>/<test>/docker-stats.csv`
+* `results/processed/metrics.csv`
+* `results/processed/scores.csv`
+* `results/processed/overall_scores.csv`
+* `results/reports/<run_id>/report.md`
 
-The single benchmark config is `config/test_config.yaml`. It is intentionally
-JSON-compatible YAML, so scripts can read it with Python standard library only.
+## Конфигурация
 
-Weights for the scientific normalization step are in `config/weights.json`.
-`rps` is maximized; latency, CPU, and RAM are minimized.
+Основной конфигурационный файл: `config/test_config.yaml`.
+
+Он намеренно записан в формате JSON-совместимого YAML, чтобы его можно было обрабатывать средствами стандартной библиотеки Python без дополнительных зависимостей.
+
+Весовые коэффициенты для научной части (нормализации) находятся в `config/weights.json`.
+
+* `rps` — максимизируется
+* `latency`, `CPU`, `RAM` — минимизируются
 
 ## Pipeline
 
-1. Build backend containers.
-2. Start exactly one framework service.
-3. Wait for `/ping`.
-4. Run `warmup`.
-5. Run `baseline`, `work`, `stress`, and `soak`.
-6. Collect k6 latency/RPS and Docker CPU/RAM metrics.
-7. Stop the service.
-8. Repeat for the next framework.
-9. Normalize metrics and generate a report.
+1. Сборка Docker-контейнеров backend-сервисов.
+2. Запуск одного тестируемого сервиса.
+3. Ожидание готовности (`/ping`).
+4. Выполнение этапа `warmup`.
+5. Последовательный запуск тестов:
+
+   * `baseline`
+   * `work`
+   * `stress`
+   * `soak`
+6. Сбор метрик:
+
+   * latency и RPS (k6)
+   * CPU и RAM (docker stats)
+7. Остановка сервиса.
+8. Повтор шагов для следующего фреймворка.
+9. Нормализация метрик и генерация итогового отчёта.
+
+---
+
