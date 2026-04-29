@@ -1,0 +1,48 @@
+x-backend-common: &backend-common
+  cpus: "${CPU_LIMIT:-1.0}"
+  cpuset: "${CPU_SET:-0}"
+  mem_limit: "${MEM_LIMIT:-512m}"
+  environment:
+    SERVICE_PORT: "${SERVICE_PORT:-8000}"
+  expose:
+    - "${SERVICE_PORT:-8000}"
+  init: true
+  networks:
+    - bench
+
+services:
+  fastapi:
+    <<: *backend-common
+    build: ./services/fastapi
+
+  sanic:
+    <<: *backend-common
+    build: ./services/sanic
+
+  aiohttp:
+    <<: *backend-common
+    build: ./services/aiohttp
+
+  express:
+    <<: *backend-common
+    build: ./services/express
+
+  nestjs:
+    <<: *backend-common
+    build: ./services/nestjs
+
+  fastify:
+    <<: *backend-common
+    build: ./services/fastify
+
+  k6:
+    image: "${K6_IMAGE:-grafana/k6:0.49.0}"
+    networks:
+      - bench
+    volumes:
+      - ./load-tests/k6:/scripts:ro
+      - ./results:/results
+
+networks:
+  bench:
+    driver: bridge

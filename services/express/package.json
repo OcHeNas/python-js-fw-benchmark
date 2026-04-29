@@ -1,0 +1,12 @@
+{
+  "name": "express-benchmark",
+  "version": "1.0.0",
+  "description": "Express benchmark service",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js"
+  },
+  "dependencies": {
+    "express": "4.19.2"
+  }
+}

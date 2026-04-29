@@ -1,0 +1,18 @@
+{
+  "rps": {
+    "weight": 0.4,
+    "direction": "max"
+  },
+  "latency_p95_ms": {
+    "weight": 0.3,
+    "direction": "min"
+  },
+  "cpu_avg_percent": {
+    "weight": 0.2,
+    "direction": "min"
+  },
+  "ram_avg_mb": {
+    "weight": 0.1,
+    "direction": "min"
+  }
+}

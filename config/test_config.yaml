@@ -1,0 +1,64 @@
+{
+  "service": {
+    "internal_port": 8000,
+    "startup_timeout_seconds": 60
+  },
+  "monitor": {
+    "interval_seconds": 2
+  },
+  "frameworks": ["fastapi", "sanic", "aiohttp", "express", "nestjs", "fastify"],
+  "tests": {
+    "warmup": {
+      "script": "warmup.js",
+      "vus": 10,
+      "duration": "30s"
+    },
+    "baseline": {
+      "script": "baseline.js",
+      "vus": 100,
+      "duration": "60s"
+    },
+    "work": {
+      "script": "work.js",
+      "vus": 100,
+      "duration": "60s"
+    },
+    "stress": {
+      "script": "stress.js",
+      "vus": 500,
+      "duration": "60s"
+    },
+    "soak": {
+      "script": "soak.js",
+      "vus": 100,
+      "duration": "10m"
+    }
+  },
+  "profiles": {
+    "default": {},
+    "ci": {
+      "tests": {
+        "warmup": {
+          "vus": 2,
+          "duration": "5s"
+        },
+        "baseline": {
+          "vus": 5,
+          "duration": "10s"
+        },
+        "work": {
+          "vus": 5,
+          "duration": "10s"
+        },
+        "stress": {
+          "vus": 10,
+          "duration": "10s"
+        },
+        "soak": {
+          "vus": 5,
+          "duration": "15s"
+        }
+      }
+    }
+  }
+}

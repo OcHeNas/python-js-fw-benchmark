@@ -1,0 +1,30 @@
+name: Benchmark
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build containers
+        run: docker compose build
+
+      - name: Run reproducible benchmark profile
+        env:
+          BENCH_PROFILE: ci
+          BENCH_BUILD: "0"
+          BENCH_RUN_ID: ci-${{ github.run_id }}
+        run: bash scripts/run_benchmarks.sh
+
+      - name: Upload benchmark artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: benchmark-results-${{ github.run_id }}
+          path: results/
