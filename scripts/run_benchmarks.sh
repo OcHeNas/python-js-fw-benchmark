@@ -110,6 +110,9 @@ for service in "${SERVICES[@]}"; do
     target="http://${service}:${SERVICE_PORT}"
 
     mkdir -p "$output_dir"
+    # The grafana/k6 image can run with a UID different from the GitHub runner.
+    # Make only the current artifact directory writable for container output.
+    chmod a+rwx "$output_dir"
     echo "Running $service / $test_name: VUs=$vus, duration=$duration"
 
     bash scripts/monitor.sh "$service" "$monitor_csv" "$MONITOR_INTERVAL_SECONDS" &
